@@ -17,7 +17,7 @@ object Analyser {
   }
 
   def customerRecord(callRecords: ParArray[CallRecord]): ParArray[CustomerRecord] = {
-    callRecords.groupBy(_.customerId).toParArray.map {
+    callRecords.groupBy(_.customerId).toParArray.par.map {
       case (id: String, callRecords: ParArray[CallRecord]) => CustomerRecord(id, callRecords)
     }
   }

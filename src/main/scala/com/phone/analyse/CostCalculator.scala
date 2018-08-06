@@ -1,16 +1,16 @@
 package com.phone.analyse
 
-import scala.collection.parallel.mutable.ParArray
-
 class CostCalculator(moreThanBoundaryCostPerSec: Double, lessThanBoundaryCostPerSec: Double) {
   private final val COST_BOUNDARY_IN_SECONDS = 180
 
-  def calculate(customerRecords: ParArray[CustomerRecord]): ParArray[CustomerCallsCost] = {
-    customerRecords.map { customerRecord =>
-        val cost = customerRecord.callRecords.map(record => calculateCallCost(record.duration)).sum
+  def calculate(customerRecord: CustomerRecord, promotion: Boolean = false): CustomerCallsCost = {
+    val records = if (promotion) {
+      customerRecord.callRecords.toIndexedSeq.sortBy(- _.duration).drop(1)
+    } else customerRecord.callRecords
 
-        CustomerCallsCost(customerRecord.id, cost)
-    }
+    val cost = records.map(record => calculateCallCost(record.duration)).sum
+
+    CustomerCallsCost(customerRecord.id, cost)
   }
 
   private def calculateCallCost(duration: Int): Double = duration match {

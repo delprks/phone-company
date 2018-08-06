@@ -9,6 +9,7 @@ object Main extends App {
   private final val CALL_LOG = "calls.log"
   private final val MORE_THAN_BOUNDARY_COST_PER_SEC = 0.03
   private final val LESS_THAN_BOUNDARY_COST_PER_SEC = 0.05
+  private final val APPLY_PROMOTION = true
 
   val fileHandler = new FileHandler
   val costCalculator = new CostCalculator(MORE_THAN_BOUNDARY_COST_PER_SEC, LESS_THAN_BOUNDARY_COST_PER_SEC)
@@ -17,7 +18,7 @@ object Main extends App {
   val callLogs: ParArray[CallRecord] = fileHandler.load(callLogFile)
 
   val customerCallRecords: ParArray[CustomerRecord] = Analyser.customerRecord(callLogs)
-  val customerCallsCost: ParArray[CustomerCallsCost] = costCalculator.calculate(customerCallRecords)
+  val customerCallsCost: ParArray[CustomerCallsCost] = customerCallRecords.par.map(callRecord => costCalculator.calculate(callRecord, APPLY_PROMOTION))
 
   customerCallsCost.foreach(println)
 }
