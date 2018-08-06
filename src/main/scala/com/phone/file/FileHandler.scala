@@ -1,5 +1,7 @@
 package com.phone.file
 
+import java.io.IOException
+
 import scala.collection.parallel.mutable.ParArray
 import scala.io.Source.fromResource
 
@@ -9,7 +11,7 @@ class FileHandler {
     try {
       fromResource(name).getLines().toIndexedSeq.toParArray
     } catch {
-      case _: Exception => throw new IllegalArgumentException(s"Could not load $name")
+      case _: Exception => throw new IOException(s"Could not load $name")
     }
   }
 
