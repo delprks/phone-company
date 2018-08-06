@@ -1,24 +1,27 @@
 package com.phone.analyse
 
-class CostCalculator(moreThanBoundaryCostPerSec: Double, lessThanBoundaryCostPerSec: Double) {
-  private final val COST_BOUNDARY_IN_SECONDS = 180
+class CostCalculator(costBoundaryInSec: Int, moreThanBoundaryCostPerSec: Double, lessThanBoundaryCostPerSec: Double) {
 
   def calculate(customerRecord: CustomerRecord, promotion: Boolean = false): CustomerCallsCost = {
-    val records = if (promotion) {
-      customerRecord.callRecords.toIndexedSeq.sortBy(- _.duration).drop(1)
-    } else customerRecord.callRecords
+    val cost = if (promotion) {
+      val groupedCalls = customerRecord.callRecords.groupBy(_.phoneNumber)
 
-    val cost = records.map(record => calculateCallCost(record.duration)).sum
+      groupedCalls.par.map {
+        case (_, callRecords) => callRecords.par.map(record => calculateCallCost(record.duration)).sum
+      }.toIndexedSeq.sortBy(- _).drop(1).sum
+    } else {
+      customerRecord.callRecords.par.map(record => calculateCallCost(record.duration)).sum
+    }
 
     CustomerCallsCost(customerRecord.id, cost)
   }
 
   private def calculateCallCost(duration: Int): Double = duration match {
-    case callDuration if callDuration <= COST_BOUNDARY_IN_SECONDS => callDuration * lessThanBoundaryCostPerSec
+    case callDuration if callDuration <= costBoundaryInSec => callDuration * lessThanBoundaryCostPerSec
     case _ =>
-      val moreThanBoundaryDuration = duration - COST_BOUNDARY_IN_SECONDS
+      val moreThanBoundaryDuration = duration - costBoundaryInSec
 
-      (COST_BOUNDARY_IN_SECONDS * lessThanBoundaryCostPerSec) + (moreThanBoundaryDuration * moreThanBoundaryCostPerSec)
+      (costBoundaryInSec * lessThanBoundaryCostPerSec) + (moreThanBoundaryDuration * moreThanBoundaryCostPerSec)
   }
 
 }
